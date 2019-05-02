@@ -9,8 +9,8 @@ var debug = require('debug')('fermentorreact:server');
 var http = require('http');
 const passport = require('passport');  
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-
-
+const session = require('express-session');
+require('dotenv').config();
 
 /**
  * Get port from environment and store in Express.
