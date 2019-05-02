@@ -7,6 +7,10 @@
 var app = require('../app');
 var debug = require('debug')('fermentorreact:server');
 var http = require('http');
+const passport = require('passport');  
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+
 
 /**
  * Get port from environment and store in Express.
@@ -21,9 +25,40 @@ app.set('port', port);
 
 var server = http.createServer(app);
 
+
+passport.use(new GoogleStrategy(  
+  {
+    clientID: process.env.GOOGLE_OAUTH_TEST_APP_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_OAUTH_TEST_APP_CLIENT_SECRET,
+    callbackURL: 'https://sheltered-woodland-76765.herokuapp.com/',
+    scope: ['email'],
+  },
+  // This is a "verify" function required by all Passport strategies
+  (accessToken, refreshToken, profile, cb) => {
+    console.log('Our user authenticated with Google, and Google sent us back this profile info identifying the authenticated user:', profile);
+    return cb(null, profile);
+  },
+));
+
+// Serve a test API endpoint
+app.get('/test', (req, res) => {  
+  res.send('Your api is working!');
+});
+
+app.get('/auth/google', passport.authenticate('google'));  
+
+
+app.get('/auth/google/callback',  
+  passport.authenticate('google', { failureRedirect: '/', session: false }),
+  (req, res) => {
+    console.log('wooo we authenticated, here is our user object:', req.user);
+    res.json(req.user);
+  }
+);
 /**
  * Listen on provided port, on all network interfaces.
  */
+
 
 server.listen(port);
 server.on('error', onError);
