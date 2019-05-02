@@ -25,7 +25,33 @@ app.set('port', port);
 
 var server = http.createServer(app);
 
+// Add session support
+app.use(session({  
+  secret: process.env.SESSION_SECRET || 'default_session_secret',
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use(passport.initialize());  
+app.use(passport.session());
 
+passport.serializeUser((user, done) => {  
+  done(null, user);
+});
+
+passport.deserializeUser((userDataFromCookie, done) => {  
+  done(null, userDataFromCookie);
+});
+
+// Checks if a user is logged in
+const accessProtectionMiddleware = (req, res, next) => {  
+  if (req.isAuthenticated()) {
+    next();
+  } else {
+    res.status(403).json({
+      message: 'must be logged in to continue',
+    });
+  }
+};
 passport.use(new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_OAUTH_TEST_APP_CLIENT_ID,
@@ -47,7 +73,7 @@ passport.use(new GoogleStrategy(
 
 //app.get('/auth/google', passport.authenticate('google'));  
 
-
+// Create API endpoints
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/', session: false }),
   (req, res) => {
@@ -56,34 +82,7 @@ app.get('/auth/google/callback',
   }
 );
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'default_session_secret',
-  resave: false,
-  saveUninitialized: false,
-}));
-app.use(passport.initialize());
-app.use(passport.session());
 
-//This will tell passport what to put into client-side cookies
-// We are just saving the entire user object 
-// Normally, we'd usually want to save just a user_id
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-passport.deserializeUser((userDataFromCookie, done) => {
-  done(null, userDataFromCookie);
-});
-
-// Checks if a user is logged in
-const accessProtectionMiddleware = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    next();
-  } else {
-    res.status(403).json({
-      message: 'must be logged in to continue',
-    });
-  }
-};
 
 // A secret endpoint accessible only to logged-in users
 app.get('/protected', accessProtectionMiddleware, (req, res) => {
