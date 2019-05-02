@@ -55,6 +55,44 @@ app.get('/auth/google/callback',
     res.json(req.user);
   }
 );
+
+app.use(session({  
+  secret: process.env.SESSION_SECRET || 'default_session_secret',
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use(passport.initialize());  
+app.use(passport.session());  
+
+//This will tell passport what to put into client-side cookies
+// We are just saving the entire user object 
+// Normally, we'd usually want to save just a user_id
+passport.serializeUser((user, done) => {  
+  done(null, user);
+});
+passport.deserializeUser((userDataFromCookie, done) => {  
+  done(null, userDataFromCookie);
+});
+
+// Checks if a user is logged in
+const accessProtectionMiddleware = (req, res, next) => {  
+  if (req.isAuthenticated()) {
+    next();
+  } else {
+    res.status(403).json({
+      message: 'must be logged in to continue',
+    });
+  }
+};
+
+// A secret endpoint accessible only to logged-in users
+app.get('/protected', accessProtectionMiddleware, (req, res) => {  
+  res.json({
+    message: 'You have accessed the protected endpoint!',
+    yourUserInfo: req.user,
+  });
+});
+
 /**
  * Listen on provided port, on all network interfaces.
  */
