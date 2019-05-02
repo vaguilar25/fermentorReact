@@ -7,7 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('fermentorreact:server');
 var http = require('http');
-const passport = require('passport');  
+const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
 require('dotenv').config();
@@ -26,7 +26,7 @@ app.set('port', port);
 var server = http.createServer(app);
 
 
-passport.use(new GoogleStrategy(  
+passport.use(new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_OAUTH_TEST_APP_CLIENT_ID,
     clientSecret: process.env.GOOGLE_OAUTH_TEST_APP_CLIENT_SECRET,
@@ -41,14 +41,14 @@ passport.use(new GoogleStrategy(
 ));
 
 // Serve a test API endpoint
-app.get('/test', (req, res) => {  
+/* app.get('/test', (req, res) => {
   res.send('Your api is working!');
-});
+}); */
 
-app.get('/auth/google', passport.authenticate('google'));  
+//app.get('/auth/google', passport.authenticate('google'));  
 
 
-app.get('/auth/google/callback',  
+app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/', session: false }),
   (req, res) => {
     console.log('wooo we authenticated, here is our user object:', req.user);
@@ -56,26 +56,26 @@ app.get('/auth/google/callback',
   }
 );
 
-app.use(session({  
+app.use(session({
   secret: process.env.SESSION_SECRET || 'default_session_secret',
   resave: false,
   saveUninitialized: false,
 }));
-app.use(passport.initialize());  
-app.use(passport.session());  
+app.use(passport.initialize());
+app.use(passport.session());
 
 //This will tell passport what to put into client-side cookies
 // We are just saving the entire user object 
 // Normally, we'd usually want to save just a user_id
-passport.serializeUser((user, done) => {  
+passport.serializeUser((user, done) => {
   done(null, user);
 });
-passport.deserializeUser((userDataFromCookie, done) => {  
+passport.deserializeUser((userDataFromCookie, done) => {
   done(null, userDataFromCookie);
 });
 
 // Checks if a user is logged in
-const accessProtectionMiddleware = (req, res, next) => {  
+const accessProtectionMiddleware = (req, res, next) => {
   if (req.isAuthenticated()) {
     next();
   } else {
@@ -86,7 +86,7 @@ const accessProtectionMiddleware = (req, res, next) => {
 };
 
 // A secret endpoint accessible only to logged-in users
-app.get('/protected', accessProtectionMiddleware, (req, res) => {  
+app.get('/protected', accessProtectionMiddleware, (req, res) => {
   res.json({
     message: 'You have accessed the protected endpoint!',
     yourUserInfo: req.user,
